@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import { seedReviewRules } from './seed-review-rules.js';
 
 const prisma = new PrismaClient();
 
@@ -62,6 +63,9 @@ async function main() {
     description: '有效期一个月',
     enabled: 1,
     sort: 1,
+    reviewQuota: 20,
+    maxContractPages: 30,
+    maxFileSizeMb: 20,
   });
 
   await ensurePlan({
@@ -72,6 +76,9 @@ async function main() {
     description: '有效期三个月',
     enabled: 1,
     sort: 2,
+    reviewQuota: 80,
+    maxContractPages: 60,
+    maxFileSizeMb: 30,
   });
 
   await ensurePlan({
@@ -82,6 +89,9 @@ async function main() {
     description: '有效期一年',
     enabled: 1,
     sort: 3,
+    reviewQuota: 400,
+    maxContractPages: 100,
+    maxFileSizeMb: 50,
   });
 
   await ensureModel({
@@ -141,7 +151,11 @@ async function main() {
     });
   }
 
-  console.log(`Seed completed. admin.id=${admin.id}, user.id=${normalUser.id}`);
+  const ruleSet = await seedReviewRules(prisma);
+
+  console.log(
+    `Seed completed. admin.id=${admin.id}, user.id=${normalUser.id}, ruleSet.id=${ruleSet.id}`,
+  );
 }
 
 main()

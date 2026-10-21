@@ -42,37 +42,139 @@ enum LoginResult {
   FAILED
 }
 
-model User {
-  id           BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
-  username     String            @unique @db.VarChar(64)
-  nickname     String?           @db.VarChar(64)
-  avatarUrl    String?           @map("avatar_url") @db.VarChar(255)
-  passwordHash String            @map("password_hash") @db.VarChar(255)
-  role         UserRole          @default(USER)
-  status       Int               @default(1) @db.TinyInt
-  createdAt    DateTime          @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt    DateTime          @updatedAt @map("updated_at") @db.DateTime(3)
+enum ContractType {
+  SALES
+  PURCHASE
+  NDA
+  EMPLOYMENT
+  LEASE
+  SERVICE
+  OTHER
+}
 
-  membership   UserMembership?
+enum ContractStatus {
+  PARSING
+  READY
+  REVIEWING
+  COMPLETED
+  FAILED
+  ARCHIVED
+}
+
+enum ParseStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+}
+
+enum ReviewStatus {
+  PENDING
+  PARSING
+  RULE_CHECK
+  MODEL_REVIEW
+  AGGREGATING
+  SUCCESS
+  FAILED
+  CANCELLED
+}
+
+enum RiskLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum FindingStatus {
+  OPEN
+  ACCEPTED
+  IGNORED
+  NEEDS_REVIEW
+}
+
+enum FindingSource {
+  RULE
+  MODEL
+}
+
+enum RuleType {
+  PRESENCE
+  REGEX
+  KEYWORD
+  THRESHOLD
+  LLM
+}
+
+enum ReportFormat {
+  DOCX
+  PDF
+}
+
+enum ReportStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+}
+
+enum FeedbackAction {
+  ACCEPT
+  IGNORE
+  CORRECT
+}
+
+enum UsageKind {
+  REVIEW
+  MODEL_CALL
+  REPORT
+  ADJUSTMENT
+}
+
+enum KnowledgeStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+}
+
+model User {
+  id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  username     String   @unique @db.VarChar(64)
+  nickname     String?  @db.VarChar(64)
+  avatarUrl    String?  @map("avatar_url") @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         UserRole @default(USER)
+  status       Int      @default(1) @db.TinyInt
+  createdAt    DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  membership    UserMembership?
   conversations Conversation[]
-  orders       Order[]
-  loginLogs    LoginLog[]
+  orders        Order[]
+  loginLogs     LoginLog[]
+
+  contractProjects ContractProject[]
+  reviewFeedbacks  ReviewFeedback[]
+  usageLedgers     UsageLedger[]
 
   @@index([status])
   @@map("users")
 }
 
 model MemberPlan {
-  id           BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
-  name         String           @db.VarChar(64)
-  price        Decimal          @db.Decimal(10, 2)
-  durationType PlanDurationType @map("duration_type")
-  durationDays Int              @map("duration_days") @db.UnsignedInt
-  description  String?          @db.VarChar(500)
-  enabled      Int              @default(1) @db.TinyInt
-  sort         Int              @default(0)
-  createdAt    DateTime         @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt    DateTime         @updatedAt @map("updated_at") @db.DateTime(3)
+  id               BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  name             String           @db.VarChar(64)
+  price            Decimal          @db.Decimal(10, 2)
+  durationType     PlanDurationType @map("duration_type")
+  durationDays     Int              @map("duration_days") @db.UnsignedInt
+  description      String?          @db.VarChar(500)
+  enabled          Int              @default(1) @db.TinyInt
+  sort             Int              @default(0)
+  reviewQuota      Int              @default(10) @map("review_quota") @db.UnsignedInt
+  maxContractPages Int              @default(30) @map("max_contract_pages") @db.UnsignedInt
+  maxFileSizeMb    Int              @default(20) @map("max_file_size_mb") @db.UnsignedInt
+  createdAt        DateTime         @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt        DateTime         @updatedAt @map("updated_at") @db.DateTime(3)
 
   orders Order[]
 
@@ -93,20 +195,20 @@ model UserMembership {
 }
 
 model Order {
-  id              BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
-  orderNo         String        @unique @map("order_no") @db.VarChar(64)
-  userId          BigInt        @map("user_id") @db.UnsignedBigInt
-  planId          BigInt        @map("plan_id") @db.UnsignedBigInt
-  planName        String        @map("plan_name") @db.VarChar(64)
-  durationDays    Int           @map("duration_days") @db.UnsignedInt
-  amount          Decimal       @db.Decimal(10, 2)
-  status          OrderStatus   @default(CREATED)
-  paymentConfigId BigInt?       @map("payment_config_id") @db.UnsignedBigInt
-  transactionNo   String?       @map("transaction_no") @db.VarChar(128)
-  paidAt          DateTime?     @map("paid_at") @db.DateTime(3)
-  expireAt        DateTime?     @map("expire_at") @db.DateTime(3)
-  createdAt       DateTime      @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt       DateTime      @updatedAt @map("updated_at") @db.DateTime(3)
+  id              BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  orderNo         String      @unique @map("order_no") @db.VarChar(64)
+  userId          BigInt      @map("user_id") @db.UnsignedBigInt
+  planId          BigInt      @map("plan_id") @db.UnsignedBigInt
+  planName        String      @map("plan_name") @db.VarChar(64)
+  durationDays    Int         @map("duration_days") @db.UnsignedInt
+  amount          Decimal     @db.Decimal(10, 2)
+  status          OrderStatus @default(CREATED)
+  paymentConfigId BigInt?     @map("payment_config_id") @db.UnsignedBigInt
+  transactionNo   String?     @map("transaction_no") @db.VarChar(128)
+  paidAt          DateTime?   @map("paid_at") @db.DateTime(3)
+  expireAt        DateTime?   @map("expire_at") @db.DateTime(3)
+  createdAt       DateTime    @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.DateTime(3)
 
   user          User           @relation(fields: [userId], references: [id])
   plan          MemberPlan     @relation(fields: [planId], references: [id])
@@ -118,19 +220,19 @@ model Order {
 }
 
 model PaymentConfig {
-  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  name        String   @db.VarChar(64)
-  provider    String   @db.VarChar(32)
-  merchantId  String?  @map("merchant_id") @db.VarChar(128)
-  appId       String?  @map("app_id") @db.VarChar(128)
-  appSecret   String?  @map("app_secret") @db.VarChar(255)
-  apiKey      String?  @map("api_key") @db.VarChar(255)
-  gatewayUrl  String?  @map("gateway_url") @db.VarChar(255)
-  notifyUrl   String?  @map("notify_url") @db.VarChar(255)
-  returnUrl   String?  @map("return_url") @db.VarChar(255)
-  enabled     Int      @default(1) @db.TinyInt
-  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  name       String   @db.VarChar(64)
+  provider   String   @db.VarChar(32)
+  merchantId String?  @map("merchant_id") @db.VarChar(128)
+  appId      String?  @map("app_id") @db.VarChar(128)
+  appSecret  String?  @map("app_secret") @db.VarChar(255)
+  apiKey     String?  @map("api_key") @db.VarChar(255)
+  gatewayUrl String?  @map("gateway_url") @db.VarChar(255)
+  notifyUrl  String?  @map("notify_url") @db.VarChar(255)
+  returnUrl  String?  @map("return_url") @db.VarChar(255)
+  enabled    Int      @default(1) @db.TinyInt
+  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.DateTime(3)
 
   orders Order[]
 
@@ -153,20 +255,21 @@ model ModelConfig {
   updatedAt   DateTime      @updatedAt @map("updated_at") @db.DateTime(3)
 
   conversations Conversation[]
+  reviewTasks   ReviewTask[]
 
   @@index([enabled, sort])
   @@map("model_configs")
 }
 
 model Conversation {
-  id             BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
-  userId         BigInt    @map("user_id") @db.UnsignedBigInt
-  modelConfigId  BigInt    @map("model_config_id") @db.UnsignedBigInt
-  title          String    @default("新对话") @db.VarChar(255)
-  lastMessageAt  DateTime? @map("last_message_at") @db.DateTime(3)
-  deletedAt      DateTime? @map("deleted_at") @db.DateTime(3)
-  createdAt      DateTime  @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt      DateTime  @updatedAt @map("updated_at") @db.DateTime(3)
+  id            BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  userId        BigInt    @map("user_id") @db.UnsignedBigInt
+  modelConfigId BigInt    @map("model_config_id") @db.UnsignedBigInt
+  title         String    @default("新对话") @db.VarChar(255)
+  lastMessageAt DateTime? @map("last_message_at") @db.DateTime(3)
+  deletedAt     DateTime? @map("deleted_at") @db.DateTime(3)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.DateTime(3)
 
   user        User        @relation(fields: [userId], references: [id])
   modelConfig ModelConfig @relation(fields: [modelConfigId], references: [id])
@@ -213,4 +316,251 @@ model SystemConfig {
   updatedAt   DateTime @updatedAt @map("updated_at") @db.DateTime(3)
 
   @@map("system_configs")
+}
+
+model ContractProject {
+  id           BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
+  userId       BigInt         @map("user_id") @db.UnsignedBigInt
+  teamId       BigInt?        @map("team_id") @db.UnsignedBigInt
+  name         String         @db.VarChar(128)
+  contractType ContractType   @map("contract_type")
+  counterparty String?        @db.VarChar(128)
+  stance       String         @default("NEUTRAL") @db.VarChar(16)
+  status       ContractStatus @default(PARSING)
+  createdAt    DateTime       @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt    DateTime       @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt    DateTime?      @map("deleted_at") @db.DateTime(3)
+
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents ContractDocument[]
+
+  @@index([userId, updatedAt])
+  @@index([userId, deletedAt])
+  @@index([status])
+  @@map("contract_projects")
+}
+
+model ContractDocument {
+  id          BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  projectId   BigInt      @map("project_id") @db.UnsignedBigInt
+  filename    String      @db.VarChar(255)
+  mimeType    String      @map("mime_type") @db.VarChar(64)
+  size        Int         @db.UnsignedInt
+  pageCount   Int         @default(0) @map("page_count") @db.UnsignedInt
+  sha256      String      @db.VarChar(64)
+  storageKey  String      @map("storage_key") @db.VarChar(255)
+  parseStatus ParseStatus @default(PENDING) @map("parse_status")
+  parsedText  String?     @map("parsed_text") @db.LongText
+  parseError  String?     @map("parse_error") @db.VarChar(500)
+  createdAt   DateTime    @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.DateTime(3)
+
+  project ContractProject  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  clauses ContractClause[]
+  tasks   ReviewTask[]
+
+  @@index([projectId, createdAt])
+  @@index([sha256])
+  @@index([parseStatus])
+  @@map("contract_documents")
+}
+
+model ContractClause {
+  id         BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  documentId BigInt   @map("document_id") @db.UnsignedBigInt
+  orderNo    Int      @map("order_no") @db.UnsignedInt
+  clauseType String?  @map("clause_type") @db.VarChar(32)
+  heading    String?  @db.VarChar(255)
+  content    String   @db.Text
+  pageStart  Int?     @map("page_start") @db.UnsignedInt
+  pageEnd    Int?     @map("page_end") @db.UnsignedInt
+  charStart  Int      @map("char_start") @db.UnsignedInt
+  charEnd    Int      @map("char_end") @db.UnsignedInt
+  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  document ContractDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  findings ReviewFinding[]
+
+  @@index([documentId, orderNo])
+  @@map("contract_clauses")
+}
+
+model ReviewRule {
+  id          BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  code        String    @db.VarChar(64)
+  name        String    @db.VarChar(128)
+  category    String    @db.VarChar(32)
+  severity    RiskLevel
+  ruleType    RuleType  @map("rule_type")
+  description String?   @db.VarChar(500)
+  configJson  Json?     @map("config_json")
+  prompt      String?   @db.Text
+  enabled     Int       @default(1) @db.TinyInt
+  version     Int       @default(1)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.DateTime(3)
+
+  ruleSetItems ReviewRuleSetItem[]
+
+  @@unique([code, version])
+  @@index([category, enabled])
+  @@map("review_rules")
+}
+
+model ReviewRuleSet {
+  id           BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
+  name         String        @db.VarChar(128)
+  description  String?       @db.VarChar(500)
+  contractType ContractType? @map("contract_type")
+  stance       String        @default("NEUTRAL") @db.VarChar(16)
+  enabled      Int           @default(1) @db.TinyInt
+  version      Int           @default(1)
+  createdAt    DateTime      @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.DateTime(3)
+
+  items ReviewRuleSetItem[]
+  tasks ReviewTask[]
+
+  @@unique([name, version])
+  @@index([contractType, enabled])
+  @@map("review_rule_sets")
+}
+
+model ReviewRuleSetItem {
+  id             BigInt     @id @default(autoincrement()) @db.UnsignedBigInt
+  ruleSetId      BigInt     @map("rule_set_id") @db.UnsignedBigInt
+  ruleId         BigInt     @map("rule_id") @db.UnsignedBigInt
+  enabled        Int        @default(1) @db.TinyInt
+  severity       RiskLevel?
+  configOverride Json?      @map("config_override")
+  sort           Int        @default(0)
+  createdAt      DateTime   @default(now()) @map("created_at") @db.DateTime(3)
+
+  ruleSet ReviewRuleSet @relation(fields: [ruleSetId], references: [id], onDelete: Cascade)
+  rule    ReviewRule    @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@unique([ruleSetId, ruleId])
+  @@index([ruleSetId, sort])
+  @@map("review_rule_set_items")
+}
+
+model ReviewTask {
+  id             BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
+  documentId     BigInt       @map("document_id") @db.UnsignedBigInt
+  ruleSetId      BigInt?      @map("rule_set_id") @db.UnsignedBigInt
+  modelConfigId  BigInt?      @map("model_config_id") @db.UnsignedBigInt
+  ruleSetVersion Int?         @map("rule_set_version")
+  stance         String       @default("NEUTRAL") @db.VarChar(16)
+  status         ReviewStatus @default(PENDING)
+  progress       Int          @default(0) @db.UnsignedInt
+  errorMessage   String?      @map("error_message") @db.VarChar(500)
+  startedAt      DateTime?    @map("started_at") @db.DateTime(3)
+  completedAt    DateTime?    @map("completed_at") @db.DateTime(3)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.DateTime(3)
+
+  document    ContractDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  ruleSet     ReviewRuleSet?   @relation(fields: [ruleSetId], references: [id], onDelete: SetNull)
+  modelConfig ModelConfig?     @relation(fields: [modelConfigId], references: [id], onDelete: SetNull)
+  findings    ReviewFinding[]
+  report      ReviewReport?
+  usageLedger UsageLedger[]
+
+  @@index([documentId, status])
+  @@index([status, createdAt])
+  @@map("review_tasks")
+}
+
+model ReviewFinding {
+  id         BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
+  taskId     BigInt        @map("task_id") @db.UnsignedBigInt
+  clauseId   BigInt?       @map("clause_id") @db.UnsignedBigInt
+  source     FindingSource @default(MODEL)
+  ruleCode   String?       @map("rule_code") @db.VarChar(64)
+  category   String        @db.VarChar(64)
+  riskLevel  RiskLevel     @map("risk_level")
+  title      String        @db.VarChar(255)
+  analysis   String        @db.Text
+  suggestion String?       @db.Text
+  legalBasis String?       @map("legal_basis") @db.Text
+  evidence   String?       @db.Text
+  confidence Decimal?      @db.Decimal(4, 3)
+  status     FindingStatus @default(OPEN)
+  createdAt  DateTime      @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt  DateTime      @updatedAt @map("updated_at") @db.DateTime(3)
+
+  task      ReviewTask       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  clause    ContractClause?  @relation(fields: [clauseId], references: [id], onDelete: SetNull)
+  feedbacks ReviewFeedback[]
+
+  @@index([taskId, riskLevel])
+  @@index([taskId, status])
+  @@index([clauseId])
+  @@map("review_findings")
+}
+
+model ReviewReport {
+  id           BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
+  taskId       BigInt       @unique @map("task_id") @db.UnsignedBigInt
+  format       ReportFormat @default(DOCX)
+  storageKey   String       @map("storage_key") @db.VarChar(255)
+  summaryJson  Json?        @map("summary_json")
+  status       ReportStatus @default(PENDING)
+  errorMessage String?      @map("error_message") @db.VarChar(500)
+  createdAt    DateTime     @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt    DateTime     @updatedAt @map("updated_at") @db.DateTime(3)
+
+  task ReviewTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@map("review_reports")
+}
+
+model UsageLedger {
+  id        BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  userId    BigInt    @map("user_id") @db.UnsignedBigInt
+  taskId    BigInt?   @map("task_id") @db.UnsignedBigInt
+  kind      UsageKind
+  tokensIn  Int       @default(0) @map("tokens_in") @db.UnsignedInt
+  tokensOut Int       @default(0) @map("tokens_out") @db.UnsignedInt
+  credits   Int       @default(0)
+  note      String?   @db.VarChar(255)
+  createdAt DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task ReviewTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([taskId])
+  @@map("usage_ledger")
+}
+
+model ReviewFeedback {
+  id        BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
+  findingId BigInt         @map("finding_id") @db.UnsignedBigInt
+  userId    BigInt         @map("user_id") @db.UnsignedBigInt
+  action    FeedbackAction
+  comment   String?        @db.Text
+  createdAt DateTime       @default(now()) @map("created_at") @db.DateTime(3)
+
+  finding ReviewFinding @relation(fields: [findingId], references: [id], onDelete: Cascade)
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([findingId, createdAt])
+  @@index([userId, createdAt])
+  @@map("review_feedbacks")
+}
+
+model KnowledgeDocument {
+  id           BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  title        String          @db.VarChar(255)
+  source       String          @db.VarChar(128)
+  jurisdiction String?         @db.VarChar(64)
+  storageKey   String          @map("storage_key") @db.VarChar(255)
+  status       KnowledgeStatus @default(PENDING)
+  createdAt    DateTime        @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt    DateTime        @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@index([status])
+  @@map("knowledge_documents")
 }
