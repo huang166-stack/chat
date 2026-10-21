@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-ink-950: #050606;
+  --color-ink-900: #0b0c0c;
+  --color-ink-800: #121414;
+  --color-ink-700: #1a1d1d;
+
+  --color-brand-400: #2ad9bc;
+  --color-brand-500: #00ccab;
+  --color-brand-600: #00bfaf;
+
+  --color-info-500: #1c6dff;
+  --color-risk-high: #f56c6c;
+  --color-risk-medium: #e6a23c;
+  --color-risk-low: #1c6dff;
+  --color-success: #00ccab;
+
+  --color-paper: #f7f9f9;
+  --color-paper-line: #e3e8e8;
+
+  --color-line: rgba(255, 255, 255, 0.08);
+  --color-line-strong: rgba(255, 255, 255, 0.16);
+
+  --font-sans: "Inter", "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+
+  --radius-card: 6px;
+  --shadow-glow: 0 0 32px rgba(0, 204, 171, 0.18);
+  --shadow-frame: 0 0 0 1px rgba(0, 204, 171, 0.2), 0 0 40px rgba(0, 204, 171, 0.18);
+}
+
+:root {
+  --background: var(--color-ink-950);
+  --foreground: #f5f7f7;
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    background: var(--background);
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: rgba(0, 204, 171, 0.28);
+    color: #ffffff;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgba(0, 204, 171, 0.7);
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+@utility tech-grid {
+  background-color: var(--color-ink-900);
+  background-image:
+    radial-gradient(600px circle at 70% 20%, rgba(0, 204, 171, 0.1), transparent 60%),
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 100% 100%, 48px 48px, 48px 48px;
+}
+
+@utility product-frame {
+  border: 1px solid rgba(0, 204, 171, 0.45);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-frame);
+  overflow: hidden;
+}
+
+@utility text-glow {
+  text-shadow: 0 0 24px rgba(0, 204, 171, 0.35);
+}

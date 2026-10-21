@@ -1,0 +1,216 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  CREATED
+  PENDING
+  PAID
+  CLOSED
+  REFUNDED
+}
+
+enum MessageRole {
+  SYSTEM
+  USER
+  ASSISTANT
+}
+
+enum PlanDurationType {
+  MONTH_1
+  MONTH_3
+  CUSTOM
+}
+
+enum ModelProvider {
+  OPENAI_COMPATIBLE
+  CUSTOM
+}
+
+enum LoginResult {
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id           BigInt            @id @default(autoincrement()) @db.UnsignedBigInt
+  username     String            @unique @db.VarChar(64)
+  nickname     String?           @db.VarChar(64)
+  avatarUrl    String?           @map("avatar_url") @db.VarChar(255)
+  passwordHash String            @map("password_hash") @db.VarChar(255)
+  role         UserRole          @default(USER)
+  status       Int               @default(1) @db.TinyInt
+  createdAt    DateTime          @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt    DateTime          @updatedAt @map("updated_at") @db.DateTime(3)
+
+  membership   UserMembership?
+  conversations Conversation[]
+  orders       Order[]
+  loginLogs    LoginLog[]
+
+  @@index([status])
+  @@map("users")
+}
+
+model MemberPlan {
+  id           BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  name         String           @db.VarChar(64)
+  price        Decimal          @db.Decimal(10, 2)
+  durationType PlanDurationType @map("duration_type")
+  durationDays Int              @map("duration_days") @db.UnsignedInt
+  description  String?          @db.VarChar(500)
+  enabled      Int              @default(1) @db.TinyInt
+  sort         Int              @default(0)
+  createdAt    DateTime         @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt    DateTime         @updatedAt @map("updated_at") @db.DateTime(3)
+
+  orders Order[]
+
+  @@index([enabled, sort])
+  @@map("member_plans")
+}
+
+model UserMembership {
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  userId    BigInt   @unique @map("user_id") @db.UnsignedBigInt
+  expireAt  DateTime @map("expire_at") @db.DateTime(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expireAt])
+  @@map("user_memberships")
+}
+
+model Order {
+  id              BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
+  orderNo         String        @unique @map("order_no") @db.VarChar(64)
+  userId          BigInt        @map("user_id") @db.UnsignedBigInt
+  planId          BigInt        @map("plan_id") @db.UnsignedBigInt
+  planName        String        @map("plan_name") @db.VarChar(64)
+  durationDays    Int           @map("duration_days") @db.UnsignedInt
+  amount          Decimal       @db.Decimal(10, 2)
+  status          OrderStatus   @default(CREATED)
+  paymentConfigId BigInt?       @map("payment_config_id") @db.UnsignedBigInt
+  transactionNo   String?       @map("transaction_no") @db.VarChar(128)
+  paidAt          DateTime?     @map("paid_at") @db.DateTime(3)
+  expireAt        DateTime?     @map("expire_at") @db.DateTime(3)
+  createdAt       DateTime      @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.DateTime(3)
+
+  user          User           @relation(fields: [userId], references: [id])
+  plan          MemberPlan     @relation(fields: [planId], references: [id])
+  paymentConfig PaymentConfig? @relation(fields: [paymentConfigId], references: [id])
+
+  @@index([userId, status])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+model PaymentConfig {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  name        String   @db.VarChar(64)
+  provider    String   @db.VarChar(32)
+  merchantId  String?  @map("merchant_id") @db.VarChar(128)
+  appId       String?  @map("app_id") @db.VarChar(128)
+  appSecret   String?  @map("app_secret") @db.VarChar(255)
+  apiKey      String?  @map("api_key") @db.VarChar(255)
+  gatewayUrl  String?  @map("gateway_url") @db.VarChar(255)
+  notifyUrl   String?  @map("notify_url") @db.VarChar(255)
+  returnUrl   String?  @map("return_url") @db.VarChar(255)
+  enabled     Int      @default(1) @db.TinyInt
+  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  orders Order[]
+
+  @@index([enabled])
+  @@map("payment_configs")
+}
+
+model ModelConfig {
+  id          BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
+  name        String        @db.VarChar(64)
+  provider    ModelProvider @default(OPENAI_COMPATIBLE)
+  baseUrl     String        @map("base_url") @db.VarChar(255)
+  apiKey      String?       @map("api_key") @db.VarChar(255)
+  modelName   String        @map("model_name") @db.VarChar(128)
+  maxTokens   Int           @default(2048) @map("max_tokens") @db.UnsignedInt
+  temperature Decimal       @default(0.70) @db.Decimal(3, 2)
+  enabled     Int           @default(1) @db.TinyInt
+  sort        Int           @default(0)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.DateTime(3)
+
+  conversations Conversation[]
+
+  @@index([enabled, sort])
+  @@map("model_configs")
+}
+
+model Conversation {
+  id             BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  userId         BigInt    @map("user_id") @db.UnsignedBigInt
+  modelConfigId  BigInt    @map("model_config_id") @db.UnsignedBigInt
+  title          String    @default("新对话") @db.VarChar(255)
+  lastMessageAt  DateTime? @map("last_message_at") @db.DateTime(3)
+  deletedAt      DateTime? @map("deleted_at") @db.DateTime(3)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.DateTime(3)
+
+  user        User        @relation(fields: [userId], references: [id])
+  modelConfig ModelConfig @relation(fields: [modelConfigId], references: [id])
+  messages    Message[]
+
+  @@index([userId, lastMessageAt(sort: Desc)])
+  @@index([userId, deletedAt])
+  @@map("conversations")
+}
+
+model Message {
+  id             BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  conversationId BigInt      @map("conversation_id") @db.UnsignedBigInt
+  role           MessageRole
+  content        String      @db.Text
+  modelName      String?     @map("model_name") @db.VarChar(128)
+  tokenCount     Int         @default(0) @map("token_count") @db.UnsignedInt
+  createdAt      DateTime    @default(now()) @map("created_at") @db.DateTime(3)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+model LoginLog {
+  id        BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
+  userId    BigInt?     @map("user_id") @db.UnsignedBigInt
+  ip        String?     @db.VarChar(64)
+  userAgent String?     @map("user_agent") @db.VarChar(255)
+  result    LoginResult
+  createdAt DateTime    @default(now()) @map("created_at") @db.DateTime(3)
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("login_logs")
+}
+
+model SystemConfig {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  configKey   String   @unique @map("config_key") @db.VarChar(64)
+  configValue String?  @map("config_value") @db.Text
+  description String?  @db.VarChar(255)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.DateTime(3)
+
+  @@map("system_configs")
+}

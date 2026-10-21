@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+
+# Build output
+dist/
+build/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Logs
+*.log
+logs-*.txt
+
+# Local runtime data
+*.rdb
+dump.rdb
+
+# Archives and temporary extracts
+docs.zip
+_report_extract.txt
+
+# Tooling
+.idea/
+.vscode/
+.DS_Store
+
+# Backup of the former frontend/.git created during repository migration
+.git-backups/
