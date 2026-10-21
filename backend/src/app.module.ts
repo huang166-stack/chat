@@ -21,6 +21,7 @@ import { OrdersModule } from './orders/orders.module.js';
 import { ConversationsModule } from './conversations/conversations.module.js';
 import { QueueModule } from './queue/queue.module.js';
 import { StorageModule } from './storage/storage.module.js';
+import { ContractsModule } from './contracts/contracts.module.js';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { StorageModule } from './storage/storage.module.js';
     ConversationsModule,
     StorageModule,
     QueueModule,
+    ContractsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

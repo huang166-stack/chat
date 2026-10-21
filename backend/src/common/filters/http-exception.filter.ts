@@ -1,4 +1,10 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import type { Response } from 'express';
 import { ErrorCodes } from '../constants/error-codes.js';
 
@@ -30,8 +36,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = String(payload);
       }
 
-      if (!(typeof payload === 'object' && payload !== null && typeof (payload as Record<string, unknown>).code === 'number')) {
+      if (!(
+        typeof payload === 'object' &&
+        payload !== null &&
+        typeof (payload as Record<string, unknown>).code === 'number'
+      )) {
         code = this.defaultCodeForStatus(status);
+        if (status === HttpStatus.PAYLOAD_TOO_LARGE) {
+          message = '合同文件不能超过 20MB';
+        }
       }
     } else {
       message = exception instanceof Error ? exception.message : message;
@@ -50,6 +63,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       401: ErrorCodes.UNAUTHORIZED,
       403: ErrorCodes.FORBIDDEN,
       404: ErrorCodes.NOT_FOUND,
+      413: ErrorCodes.FILE_TOO_LARGE,
       429: ErrorCodes.TOO_MANY_REQUESTS,
       500: ErrorCodes.INTERNAL_ERROR,
     };

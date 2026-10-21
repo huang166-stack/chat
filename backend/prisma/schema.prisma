@@ -344,7 +344,7 @@ model ContractDocument {
   id          BigInt      @id @default(autoincrement()) @db.UnsignedBigInt
   projectId   BigInt      @map("project_id") @db.UnsignedBigInt
   filename    String      @db.VarChar(255)
-  mimeType    String      @map("mime_type") @db.VarChar(64)
+  mimeType    String      @map("mime_type") @db.VarChar(128)
   size        Int         @db.UnsignedInt
   pageCount   Int         @default(0) @map("page_count") @db.UnsignedInt
   sha256      String      @db.VarChar(64)

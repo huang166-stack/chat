@@ -61,19 +61,30 @@ async function refreshSession(): Promise<AuthSession> {
 async function request<T>(path: string, options: RequestOptions = {}, retry = true): Promise<T> {
   const headers = new Headers(options.headers);
   const accessToken = useAuthStore.getState().accessToken;
+  const formData =
+    typeof FormData !== 'undefined' && options.body instanceof FormData
+      ? options.body
+      : null;
 
   if (accessToken) {
     headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
-  if (options.body !== undefined) {
+  if (options.body !== undefined && !formData) {
     headers.set('Content-Type', 'application/json');
   }
+
+  const body: BodyInit | undefined =
+    options.body === undefined
+      ? undefined
+      : formData
+        ? formData
+        : JSON.stringify(options.body);
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    body,
   });
 
   if (response.status === 401 && retry && !path.startsWith('/auth/')) {

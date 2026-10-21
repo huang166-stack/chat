@@ -28,6 +28,8 @@ export function proxy(request: NextRequest) {
     isAdminPage ||
     pathname === '/membership' ||
     pathname.startsWith('/membership/') ||
+    pathname === '/workspace' ||
+    pathname.startsWith('/workspace/') ||
     pathname === '/payment/return' ||
     pathname.startsWith('/payment/return/');
 
@@ -47,5 +49,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/chat/:path*', '/admin/:path*', '/membership/:path*', '/payment/return/:path*', '/login', '/register'],
+  matcher: ['/chat/:path*', '/admin/:path*', '/membership/:path*', '/workspace/:path*', '/payment/return/:path*', '/login', '/register'],
 };
