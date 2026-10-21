@@ -1,4 +1,4 @@
-﻿services:
+services:
   mysql:
     image: mysql:8.4
     restart: unless-stopped
@@ -46,6 +46,12 @@
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:?APP_ENCRYPTION_KEY is required}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      STORAGE_LOCAL_DIR: ${STORAGE_LOCAL_DIR:-/app/uploads}
+      STORAGE_PUBLIC_BASE_URL: ${STORAGE_PUBLIC_BASE_URL:-http://localhost/api}
+      STORAGE_SIGNING_SECRET: ${STORAGE_SIGNING_SECRET:?STORAGE_SIGNING_SECRET is required}
+      STORAGE_SIGNED_URL_TTL_SECONDS: ${STORAGE_SIGNED_URL_TTL_SECONDS:-600}
+      QUEUE_PREFIX: ${QUEUE_PREFIX:-contract:}
       CORS_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost}
       FRONTEND_BASE_URL: ${PUBLIC_ORIGIN:-http://localhost}
       LOG_LEVEL: ${LOG_LEVEL:-info}
@@ -56,6 +62,8 @@
         condition: service_healthy
     expose:
       - "3001"
+    volumes:
+      - uploads:/app/uploads
     logging:
       driver: json-file
       options:
@@ -96,3 +104,4 @@
 volumes:
   mysql_data:
   redis_data:
+  uploads:

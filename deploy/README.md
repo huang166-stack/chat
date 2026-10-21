@@ -20,6 +20,7 @@ cp deploy/.env.production.example .env
 - `JWT_ACCESS_SECRET`
 - `JWT_REFRESH_SECRET`
 - `APP_ENCRYPTION_KEY`：64 位 hex
+- `STORAGE_SIGNING_SECRET`：至少 32 字符，用于本地文件签名 URL
 - `PUBLIC_ORIGIN`：正式域名，例如 `https://chat.example.com`
 
 生成加密密钥：
@@ -60,6 +61,7 @@ docker compose exec backend npx prisma migrate deploy
 
 - `20260912093521_init`
 - `20260912101445_add_user_profile_fields`
+- `20261021042741_add_contract_review_models`
 
 ## 4. 配置 HTTPS
 
@@ -106,6 +108,7 @@ proxy_send_timeout 3600s;
 
 - [ ] `PUBLIC_ORIGIN` 使用正式 HTTPS 域名。
 - [ ] MySQL、Redis 数据卷已持久化。
+- [ ] `uploads` 数据卷已持久化，`STORAGE_SIGNING_SECRET` 不是示例值。
 - [ ] 数据库迁移已执行且 `_prisma_migrations` 状态正常。
 - [ ] 支付回调公网可达。
 - [ ] 管理后台支付配置中的 `notifyUrl` 使用 HTTPS。

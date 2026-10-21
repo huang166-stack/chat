@@ -16,12 +16,14 @@ coverage/
 .env.*
 !.env.example
 !**/.env.example
+!deploy/.env.production.example
 
 # Logs
 *.log
 logs-*.txt
 
 # Local runtime data
+backend/uploads/
 *.rdb
 dump.rdb
 

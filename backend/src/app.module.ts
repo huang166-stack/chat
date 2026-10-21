@@ -1,4 +1,4 @@
-﻿import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
@@ -19,6 +19,8 @@ import { UsersModule } from './users/users.module.js';
 import { PaymentModule } from './payment/payment.module.js';
 import { OrdersModule } from './orders/orders.module.js';
 import { ConversationsModule } from './conversations/conversations.module.js';
+import { QueueModule } from './queue/queue.module.js';
+import { StorageModule } from './storage/storage.module.js';
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { ConversationsModule } from './conversations/conversations.module.js';
     PaymentModule,
     OrdersModule,
     ConversationsModule,
+    StorageModule,
+    QueueModule,
   ],
   controllers: [AppController],
   providers: [AppService],
