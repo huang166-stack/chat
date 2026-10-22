@@ -7,7 +7,7 @@ const DEFAULT_RULE_SET = {
   enabled: 1,
 };
 
-const DEFAULT_RULES = [
+export const DEFAULT_RULES = [
   {
     code: 'CONFIDENTIALITY_MISSING',
     name: '缺少保密条款',
