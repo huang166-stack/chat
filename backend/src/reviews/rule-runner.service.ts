@@ -55,6 +55,13 @@ export class RuleRunnerService {
     return {
       ruleSetId: String(ruleSet.id),
       ruleSetVersion: ruleSet.version,
+      rules: ruleSet.rules.map((rule) => ({
+        code: rule.code,
+        name: rule.name,
+        category: rule.category,
+        severity: rule.severity,
+        description: rule.description,
+      })),
       findings: sortFindings([...findings.values()], input.clauses),
       llmRequests: [...llmRequests.values()],
     };
@@ -85,6 +92,6 @@ function sortFindings(
       return leftOrder - rightOrder;
     }
 
-    return left.ruleCode.localeCompare(right.ruleCode);
+    return (left.ruleCode ?? '').localeCompare(right.ruleCode ?? '');
   });
 }

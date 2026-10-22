@@ -20,23 +20,7 @@ export class RuleSetService {
 
   async load(selection: RuleSetSelection): Promise<LoadedRuleSet> {
     const stance = selection.stance ?? 'NEUTRAL';
-    const where: Prisma.ReviewRuleSetWhereInput = selection.ruleSetId
-      ? { id: selection.ruleSetId, enabled: 1 }
-      : {
-          enabled: 1,
-          stance,
-          ...(selection.contractType
-            ? {
-                OR: [
-                  { contractType: selection.contractType as ContractType },
-                  { contractType: null },
-                ],
-              }
-            : { contractType: null }),
-        };
-
-    const ruleSet = await this.prisma.reviewRuleSet.findFirst({
-      where,
+    const query = {
       orderBy: [{ version: 'desc' }, { updatedAt: 'desc' }],
       include: {
         items: {
@@ -45,7 +29,40 @@ export class RuleSetService {
           include: { rule: true },
         },
       },
+    } satisfies Prisma.ReviewRuleSetFindFirstArgs;
+    const whereForStance = (
+      selectedStance: string,
+    ): Prisma.ReviewRuleSetWhereInput => ({
+      enabled: 1,
+      stance: selectedStance,
+      ...(selection.contractType
+        ? {
+            OR: [
+              { contractType: selection.contractType as ContractType },
+              { contractType: null },
+            ],
+          }
+        : { contractType: null }),
     });
+
+    let ruleSet;
+    if (selection.ruleSetId) {
+      ruleSet = await this.prisma.reviewRuleSet.findFirst({
+        ...query,
+        where: { id: selection.ruleSetId, enabled: 1 },
+      });
+    } else {
+      ruleSet = await this.prisma.reviewRuleSet.findFirst({
+        ...query,
+        where: whereForStance(stance),
+      });
+      if (!ruleSet && stance !== 'NEUTRAL') {
+        ruleSet = await this.prisma.reviewRuleSet.findFirst({
+          ...query,
+          where: whereForStance('NEUTRAL'),
+        });
+      }
+    }
 
     if (!ruleSet) {
       throw new Error('审查规则集不存在或已停用');

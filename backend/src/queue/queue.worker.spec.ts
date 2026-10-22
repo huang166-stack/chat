@@ -1,14 +1,18 @@
 import type { Job } from 'bullmq';
 import type { ContractJobData } from './queue.types.js';
 import type { ParseProcessor } from './processors/parse.processor.js';
+import type { ReviewProcessor } from './processors/review.processor.js';
 import { ContractQueueWorker } from './queue.worker.js';
 
 describe('ContractQueueWorker', () => {
+  const parseProcessor = { process: vi.fn() };
+  const reviewProcessor = { process: vi.fn() };
+  const worker = new ContractQueueWorker(
+    parseProcessor as unknown as ParseProcessor,
+    reviewProcessor as unknown as ReviewProcessor,
+  );
+
   it('accepts every declared contract job type', async () => {
-    const parseProcessor = { process: vi.fn() };
-    const worker = new ContractQueueWorker(
-      parseProcessor as unknown as ParseProcessor,
-    );
     const job = {
       id: 'job-1',
       name: 'cleanup',
@@ -23,10 +27,6 @@ describe('ContractQueueWorker', () => {
   });
 
   it('throws for an unknown job type so BullMQ can retry and fail it', async () => {
-    const parseProcessor = { process: vi.fn() };
-    const worker = new ContractQueueWorker(
-      parseProcessor as unknown as ParseProcessor,
-    );
     const job = {
       id: 'job-2',
       name: 'unknown',
@@ -44,10 +44,7 @@ describe('ContractQueueWorker', () => {
       clauseCount: 3,
       skipped: false,
     };
-    const parseProcessor = { process: vi.fn().mockResolvedValue(result) };
-    const worker = new ContractQueueWorker(
-      parseProcessor as unknown as ParseProcessor,
-    );
+    parseProcessor.process.mockResolvedValue(result);
     const job = {
       id: 'job-3',
       name: 'parse-document',
@@ -56,5 +53,18 @@ describe('ContractQueueWorker', () => {
 
     await expect(worker.process(job)).resolves.toEqual(result);
     expect(parseProcessor.process).toHaveBeenCalledWith(job);
+  });
+
+  it('delegates review jobs to the review processor', async () => {
+    const result = { taskId: '4', status: 'SUCCESS', findingCount: 3 };
+    reviewProcessor.process.mockResolvedValue(result);
+    const job = {
+      id: 'job-4',
+      name: 'review-document',
+      data: { taskId: '4', documentId: '5', userId: '6' },
+    } as Job<ContractJobData>;
+
+    await expect(worker.process(job)).resolves.toEqual(result);
+    expect(reviewProcessor.process).toHaveBeenCalledWith(job);
   });
 });

@@ -289,6 +289,41 @@ describe('RuleSetService', () => {
       '审查规则集不存在或已停用',
     );
   });
+
+  it('falls back to the neutral rule set when no stance-specific set exists', async () => {
+    const neutralRuleSet = {
+      id: 9n,
+      name: '默认规则集',
+      version: 1,
+      stance: 'NEUTRAL',
+      contractType: null,
+      enabled: 1,
+      items: [],
+    };
+    const { service, prisma } = createService(null);
+    prisma.reviewRuleSet.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(neutralRuleSet);
+
+    const loaded = await service.load({
+      contractType: 'SALES',
+      stance: 'PARTY_A',
+    });
+
+    expect(prisma.reviewRuleSet.findFirst).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        where: expect.objectContaining({ stance: 'PARTY_A' }),
+      }),
+    );
+    expect(prisma.reviewRuleSet.findFirst).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        where: expect.objectContaining({ stance: 'NEUTRAL' }),
+      }),
+    );
+    expect(loaded.stance).toBe('NEUTRAL');
+  });
 });
 
 describe('RuleRunnerService', () => {

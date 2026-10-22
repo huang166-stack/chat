@@ -17,6 +17,16 @@ export interface AiModelParams {
   temperature: number;
 }
 
+export interface AiTokenUsage {
+  tokensIn: number;
+  tokensOut: number;
+}
+
+export interface AiCompletionResult {
+  content: string;
+  usage: AiTokenUsage;
+}
+
 @Injectable()
 export class AiClientService {
   private readonly logger = new Logger(AiClientService.name);
@@ -30,7 +40,9 @@ export class AiClientService {
     const response = await this.request(params, messages, true, signal);
     const reader = response.body?.getReader();
     if (!reader) {
-      this.logger.error('Model stream response body is not readable', { modelName: params.modelName });
+      this.logger.error('Model stream response body is not readable', {
+        modelName: params.modelName,
+      });
       throw this.modelCallError();
     }
 
@@ -63,7 +75,10 @@ export class AiClientService {
           try {
             const payload = JSON.parse(data);
             if (payload.error) {
-              this.logger.warn('Model stream chunk contains error', { modelName: params.modelName, chunk: data });
+              this.logger.warn('Model stream chunk contains error', {
+                modelName: params.modelName,
+                chunk: data,
+              });
             }
             const delta = payload.choices?.[0]?.delta?.content;
             if (typeof delta === 'string' && delta.length > 0) {
@@ -71,7 +86,14 @@ export class AiClientService {
               onDelta(delta);
             }
           } catch (parseError) {
-            this.logger.warn('Failed to parse model stream chunk', { modelName: params.modelName, chunk: data, message: parseError instanceof Error ? parseError.message : String(parseError) });
+            this.logger.warn('Failed to parse model stream chunk', {
+              modelName: params.modelName,
+              chunk: data,
+              message:
+                parseError instanceof Error
+                  ? parseError.message
+                  : String(parseError),
+            });
             continue;
           }
         }
@@ -80,23 +102,56 @@ export class AiClientService {
       reader.releaseLock();
     }
 
-    this.logger.log('Model stream completed', { modelName: params.modelName, contentLength: fullContent.length });
+    this.logger.log('Model stream completed', {
+      modelName: params.modelName,
+      contentLength: fullContent.length,
+    });
     return fullContent;
   }
 
-  async completeChat(params: AiModelParams, messages: AiMessage[], signal: AbortSignal): Promise<string> {
+  async completeChat(
+    params: AiModelParams,
+    messages: AiMessage[],
+    signal: AbortSignal,
+  ): Promise<string> {
+    return (await this.completeChatWithUsage(params, messages, signal)).content;
+  }
+
+  async completeChatWithUsage(
+    params: AiModelParams,
+    messages: AiMessage[],
+    signal: AbortSignal,
+  ): Promise<AiCompletionResult> {
     const response = await this.request(params, messages, false, signal);
     const payload = (await response.json()) as {
       choices?: Array<{ message?: { content?: string } }>;
+      usage?: {
+        prompt_tokens?: number;
+        completion_tokens?: number;
+      };
     };
     const content = payload.choices?.[0]?.message?.content;
 
     if (typeof content !== 'string') {
-      this.logger.error('Model response did not include content', { modelName: params.modelName, payload });
+      this.logger.error('Model response did not include content', {
+        modelName: params.modelName,
+        payload,
+      });
       throw this.modelCallError();
     }
 
-    return content;
+    return {
+      content,
+      usage: {
+        tokensIn:
+          payload.usage?.prompt_tokens ??
+          this.estimateTokens(
+            messages.map((message) => message.content).join('\n'),
+          ),
+        tokensOut:
+          payload.usage?.completion_tokens ?? this.estimateTokens(content),
+      },
+    };
   }
 
   private async request(
@@ -114,7 +169,12 @@ export class AiClientService {
     }
 
     const url = this.buildUrl(params.baseUrl);
-    this.logger.log('Calling model API', { url, model: params.modelName, stream, messageCount: messages.length });
+    this.logger.log('Calling model API', {
+      url,
+      model: params.modelName,
+      stream,
+      messageCount: messages.length,
+    });
 
     let response: Response;
     try {
@@ -136,7 +196,12 @@ export class AiClientService {
       }
       const message = error instanceof Error ? error.message : String(error);
       const stack = error instanceof Error ? error.stack : undefined;
-      this.logger.error('Model API request failed', { url, model: params.modelName, message, stack });
+      this.logger.error('Model API request failed', {
+        url,
+        model: params.modelName,
+        message,
+        stack,
+      });
       throw this.modelCallError();
     }
 
@@ -152,7 +217,11 @@ export class AiClientService {
       throw this.modelCallError();
     }
 
-    this.logger.log('Model API responded', { url, model: params.modelName, status: response.status });
+    this.logger.log('Model API responded', {
+      url,
+      model: params.modelName,
+      status: response.status,
+    });
     return response;
   }
 
@@ -167,10 +236,20 @@ export class AiClientService {
 
   private buildUrl(baseUrl: string): string {
     const cleanBaseUrl = baseUrl.replace(/\/+$/, '');
-    return cleanBaseUrl.endsWith('/chat/completions') ? cleanBaseUrl : `${cleanBaseUrl}/chat/completions`;
+    return cleanBaseUrl.endsWith('/chat/completions')
+      ? cleanBaseUrl
+      : `${cleanBaseUrl}/chat/completions`;
   }
 
   private modelCallError(): BusinessException {
-    return new BusinessException('模型调用失败', ErrorCodes.MODEL_CALL_FAILED, HttpStatus.BAD_GATEWAY);
+    return new BusinessException(
+      '模型调用失败',
+      ErrorCodes.MODEL_CALL_FAILED,
+      HttpStatus.BAD_GATEWAY,
+    );
+  }
+
+  private estimateTokens(content: string): number {
+    return Math.max(1, Math.ceil(Buffer.byteLength(content, 'utf8') / 4));
   }
 }

@@ -88,8 +88,8 @@ export interface RuleExecutionContext {
 
 export interface ReviewFindingDraft {
   clauseId: bigint | null;
-  source: 'RULE';
-  ruleCode: string;
+  source: 'RULE' | 'MODEL';
+  ruleCode: string | null;
   category: string;
   riskLevel: RiskLevel;
   title: string;
@@ -123,6 +123,14 @@ export interface ReviewRuleHandler {
   ): RuleEvaluation;
 }
 
+export interface RuleSummary {
+  code: string;
+  name: string;
+  category: string;
+  severity: RiskLevel;
+  description: string | null;
+}
+
 export interface RuleRunInput {
   clauses: EvaluationClause[];
   ruleSetId?: bigint;
@@ -133,6 +141,7 @@ export interface RuleRunInput {
 export interface RuleRunResult {
   ruleSetId: string;
   ruleSetVersion: number;
+  rules: RuleSummary[];
   findings: ReviewFindingDraft[];
   llmRequests: LlmRuleRequest[];
 }
