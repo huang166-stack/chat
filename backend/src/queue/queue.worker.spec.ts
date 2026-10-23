@@ -1,15 +1,18 @@
 import type { Job } from 'bullmq';
 import type { ContractJobData } from './queue.types.js';
 import type { ParseProcessor } from './processors/parse.processor.js';
+import type { ReportProcessor } from './processors/report.processor.js';
 import type { ReviewProcessor } from './processors/review.processor.js';
 import { ContractQueueWorker } from './queue.worker.js';
 
 describe('ContractQueueWorker', () => {
   const parseProcessor = { process: vi.fn() };
   const reviewProcessor = { process: vi.fn() };
+  const reportProcessor = { process: vi.fn() };
   const worker = new ContractQueueWorker(
     parseProcessor as unknown as ParseProcessor,
     reviewProcessor as unknown as ReviewProcessor,
+    reportProcessor as unknown as ReportProcessor,
   );
 
   it('accepts every declared contract job type', async () => {
@@ -66,5 +69,18 @@ describe('ContractQueueWorker', () => {
 
     await expect(worker.process(job)).resolves.toEqual(result);
     expect(reviewProcessor.process).toHaveBeenCalledWith(job);
+  });
+
+  it('delegates report jobs to the report processor', async () => {
+    const result = { reportId: '7', status: 'SUCCESS', findingCount: 3 };
+    reportProcessor.process.mockResolvedValue(result);
+    const job = {
+      id: 'job-5',
+      name: 'generate-report',
+      data: { taskId: '4', reportId: '7', userId: '6' },
+    } as Job<ContractJobData>;
+
+    await expect(worker.process(job)).resolves.toEqual(result);
+    expect(reportProcessor.process).toHaveBeenCalledWith(job);
   });
 });

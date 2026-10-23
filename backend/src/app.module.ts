@@ -23,6 +23,7 @@ import { ConversationsModule } from './conversations/conversations.module.js';
 import { QueueModule } from './queue/queue.module.js';
 import { StorageModule } from './storage/storage.module.js';
 import { ContractsModule } from './contracts/contracts.module.js';
+import { ReportsModule } from './reports/reports.module.js';
 import { ReviewsModule } from './reviews/reviews.module.js';
 
 @Module({
@@ -52,6 +53,7 @@ import { ReviewsModule } from './reviews/reviews.module.js';
     QueueModule,
     ContractsModule,
     ReviewsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

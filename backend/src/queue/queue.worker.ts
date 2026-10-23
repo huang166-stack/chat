@@ -5,10 +5,12 @@ import { CONTRACT_QUEUE } from './queue.constants.js';
 import type {
   ContractJobData,
   ContractJobName,
+  GenerateReportPayload,
   ParseDocumentPayload,
   ReviewDocumentPayload,
 } from './queue.types.js';
 import { ParseProcessor } from './processors/parse.processor.js';
+import { ReportProcessor } from './processors/report.processor.js';
 import { ReviewProcessor } from './processors/review.processor.js';
 
 @Processor(CONTRACT_QUEUE, { concurrency: 2 })
@@ -18,6 +20,7 @@ export class ContractQueueWorker extends WorkerHost {
   constructor(
     private readonly parseProcessor: ParseProcessor,
     private readonly reviewProcessor: ReviewProcessor,
+    private readonly reportProcessor: ReportProcessor,
   ) {
     super();
   }
@@ -31,6 +34,7 @@ export class ContractQueueWorker extends WorkerHost {
       case 'review-document':
         return this.reviewProcessor.process(job as Job<ReviewDocumentPayload>);
       case 'generate-report':
+        return this.reportProcessor.process(job as Job<GenerateReportPayload>);
       case 'cleanup':
         this.logger.log(`Consumed ${jobName} job ${job.id ?? 'unknown'}`);
         return { accepted: true, jobId: job.id, type: jobName };
