@@ -24,9 +24,9 @@ export function SectionTitle({
           {eyebrow}
         </span>
       ) : null}
-      <h2 className="text-3xl font-bold leading-tight text-white md:text-4xl">{title}</h2>
+      <h2 className="text-3xl font-bold leading-tight text-copy md:text-4xl">{title}</h2>
       {description ? (
-        <p className="max-w-3xl text-sm leading-7 text-zinc-400 md:text-base">{description}</p>
+        <p className="max-w-3xl text-sm leading-7 text-copy-muted md:text-base">{description}</p>
       ) : null}
     </div>
   );

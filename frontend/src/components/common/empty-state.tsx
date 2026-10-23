@@ -17,8 +17,8 @@ export function EmptyState({ title, description, icon, action, className = '' }:
         {icon ?? <span className="h-2 w-2 rounded-full bg-brand-500" />}
       </div>
       <div className="space-y-1.5">
-        <p className="text-base font-medium text-white">{title}</p>
-        {description ? <p className="text-sm text-zinc-400">{description}</p> : null}
+        <p className="text-base font-medium text-copy">{title}</p>
+        {description ? <p className="text-sm text-copy-muted">{description}</p> : null}
       </div>
       {action}
     </div>

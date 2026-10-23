@@ -1,20 +1,22 @@
-﻿'use client';
-
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { useAuthStore } from '@/lib/stores/auth-store';
+import { Advantages } from '@/components/marketing/advantages';
+import { Capabilities } from '@/components/marketing/capabilities';
+import { Hero } from '@/components/marketing/hero';
+import { MarketingShell } from '@/components/marketing/marketing-shell';
+import { Pricing } from '@/components/marketing/pricing';
+import { ProductShowcase } from '@/components/marketing/product-showcase';
+import { Scenarios } from '@/components/marketing/scenarios';
 
 export default function HomePage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const accessToken = useAuthStore.getState().accessToken;
-    router.replace(accessToken ? '/chat' : '/login');
-  }, [router]);
-
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-50 text-sm text-zinc-500 dark:bg-zinc-950">
-      正在跳转...
-    </main>
+    <MarketingShell>
+      <main>
+        <Hero />
+        <ProductShowcase />
+        <Capabilities />
+        <Advantages />
+        <Scenarios />
+        <Pricing />
+      </main>
+    </MarketingShell>
   );
 }

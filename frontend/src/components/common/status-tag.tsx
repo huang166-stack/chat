@@ -30,13 +30,13 @@ const tones: Record<StatusTone, { label: string; className: string; dotClassName
   },
   neutral: {
     label: '未处理',
-    className: 'border-white/15 bg-white/5 text-zinc-400',
-    dotClassName: 'bg-zinc-500',
+    className: 'border-line-strong bg-line text-copy-muted',
+    dotClassName: 'bg-copy-subtle',
   },
   processing: {
     label: '处理中',
-    className: 'border-white/15 bg-white/5 text-zinc-300',
-    dotClassName: 'bg-zinc-300 animate-pulse',
+    className: 'border-brand-500/30 bg-brand-500/10 text-brand-400',
+    dotClassName: 'bg-brand-400 animate-pulse',
   },
 };
 
