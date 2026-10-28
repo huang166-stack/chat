@@ -38,7 +38,7 @@ export class ContractsController {
     @UploadedFile() file: UploadedContractFile | undefined,
     @Body() dto: UploadContractDto,
   ) {
-    return this.contractsService.upload(user.userId, file, dto);
+    return this.contractsService.upload(user.userId, file, dto, user.role);
   }
 
   @Get('overview')

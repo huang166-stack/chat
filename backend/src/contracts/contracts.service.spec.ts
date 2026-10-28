@@ -5,8 +5,10 @@ import { BusinessException } from '../common/exceptions/business.exception.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ContractQueueService } from '../queue/queue.service.js';
 import { StorageService } from '../storage/storage.service.js';
+import { UsageService } from '../usage/usage.service.js';
 import {
   MAX_CONTRACT_FILE_BYTES,
+  MAX_CONTRACT_PAGES,
   type UploadedContractFile,
 } from './contracts.constants.js';
 import { ContractsService } from './contracts.service.js';
@@ -130,13 +132,17 @@ function setup() {
   const queue = {
     enqueue: vi.fn().mockResolvedValue('job-1'),
   };
+  const usage = {
+    assertCanUpload: vi.fn().mockResolvedValue(undefined),
+  };
   const service = new ContractsService(
     prisma as unknown as PrismaService,
     storage as unknown as StorageService,
     queue as unknown as ContractQueueService,
+    usage as unknown as UsageService,
   );
 
-  return { service, prisma, storage, queue };
+  return { service, prisma, storage, queue, usage };
 }
 
 async function expectBusinessError(promise: Promise<unknown>, code: number) {
@@ -232,7 +238,7 @@ describe('ContractsService', () => {
     expect(queue.enqueue).not.toHaveBeenCalled();
   });
 
-  it('rejects files over 20MB', async () => {
+  it('rejects files over the absolute upload limit', async () => {
     const { service } = setup();
     const buffer = Buffer.alloc(MAX_CONTRACT_FILE_BYTES + 1);
 
@@ -244,9 +250,9 @@ describe('ContractsService', () => {
     );
   });
 
-  it('rejects PDFs with more than 30 pages', async () => {
+  it('rejects PDFs over the absolute page limit', async () => {
     const { service } = setup();
-    const buffer = await createPdf(31);
+    const buffer = await createPdf(MAX_CONTRACT_PAGES + 1);
 
     await expectBusinessError(
       service.upload(1n, uploadFile(buffer, 'long.pdf', 'application/pdf'), {

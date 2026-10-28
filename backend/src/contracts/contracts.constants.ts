@@ -14,8 +14,8 @@ export const CONTRACT_STANCES = ['PARTY_A', 'PARTY_B', 'NEUTRAL'] as const;
 
 export type ContractStanceValue = (typeof CONTRACT_STANCES)[number];
 
-export const MAX_CONTRACT_FILE_BYTES = 20 * 1024 * 1024;
-export const MAX_CONTRACT_PAGES = 30;
+export const MAX_CONTRACT_FILE_BYTES = 100 * 1024 * 1024;
+export const MAX_CONTRACT_PAGES = 100;
 
 export interface AllowedContractFileType {
   extension: '.pdf' | '.docx';

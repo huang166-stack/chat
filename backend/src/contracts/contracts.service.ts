@@ -12,7 +12,10 @@ import { getPagination, toPage } from '../common/utils/pagination.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ContractQueueService } from '../queue/queue.service.js';
 import { StorageService } from '../storage/storage.service.js';
-import { ACTIVE_REVIEW_STATUSES } from '../usage/usage.service.js';
+import {
+  ACTIVE_REVIEW_STATUSES,
+  UsageService,
+} from '../usage/usage.service.js';
 import {
   ALLOWED_CONTRACT_FILE_TYPES,
   MAX_CONTRACT_FILE_BYTES,
@@ -98,6 +101,7 @@ export class ContractsService {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
     private readonly queue: ContractQueueService,
+    private readonly usage: UsageService,
   ) {}
 
   async findAll(userId: bigint, query: ContractQueryDto) {
@@ -304,8 +308,15 @@ export class ContractsService {
     userId: bigint,
     file: UploadedContractFile | undefined,
     dto: UploadContractDto,
+    role = 'USER',
   ): Promise<UploadContractResult> {
     const validatedFile = await this.validateFile(file);
+    await this.usage.assertCanUpload(
+      userId,
+      role,
+      file!.buffer.length,
+      validatedFile.pageCount,
+    );
     const sha256 = createHash('sha256').update(file!.buffer).digest('hex');
 
     const duplicate = await this.prisma.contractDocument.findFirst({
@@ -444,7 +455,7 @@ export class ContractsService {
 
     if (file.buffer.length > MAX_CONTRACT_FILE_BYTES) {
       throw new BusinessException(
-        '合同文件不能超过 20MB',
+        '合同文件超过允许大小',
         ErrorCodes.FILE_TOO_LARGE,
         HttpStatus.PAYLOAD_TOO_LARGE,
       );
@@ -498,7 +509,7 @@ export class ContractsService {
 
     if (pageCount > MAX_CONTRACT_PAGES) {
       throw new BusinessException(
-        `合同页数不能超过 ${MAX_CONTRACT_PAGES} 页`,
+        `合同页数超过允许上限 ${MAX_CONTRACT_PAGES} 页`,
         ErrorCodes.FILE_PAGE_LIMIT_EXCEEDED,
         HttpStatus.BAD_REQUEST,
       );

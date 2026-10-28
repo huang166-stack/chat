@@ -7,6 +7,7 @@ export interface UsageSummary {
   usedPages: number;
   remainingPages: number | null;
   maxContractPages: number | null;
+  maxFileSizeMb: number | null;
   activeTasks: number;
   concurrencyLimit: number | null;
 }

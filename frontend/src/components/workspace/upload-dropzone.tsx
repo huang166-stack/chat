@@ -2,7 +2,7 @@
 
 import { useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024;
+const DEFAULT_MAX_FILE_SIZE_MB = 20;
 const PDF_MIME = 'application/pdf';
 const DOCX_MIME =
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -11,10 +11,11 @@ interface UploadDropzoneProps {
   file: File | null;
   onFileChange: (file: File | null) => void;
   onError: (message: string) => void;
+  maxFileSizeMb?: number;
   disabled?: boolean;
 }
 
-function validateFile(file: File): string | null {
+function validateFile(file: File, maxFileSizeMb: number): string | null {
   const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
   const expectedMime = extension === '.pdf' ? PDF_MIME : DOCX_MIME;
 
@@ -22,8 +23,8 @@ function validateFile(file: File): string | null {
     return '仅支持 PDF 或 DOCX 格式的合同文件';
   }
 
-  if (file.size > MAX_FILE_SIZE) {
-    return '合同文件不能超过 20MB';
+  if (file.size > maxFileSizeMb * 1024 * 1024) {
+    return `合同文件不能超过 ${maxFileSizeMb}MB`;
   }
 
   if (
@@ -45,6 +46,7 @@ export function UploadDropzone({
   file,
   onFileChange,
   onError,
+  maxFileSizeMb = DEFAULT_MAX_FILE_SIZE_MB,
   disabled = false,
 }: UploadDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -53,7 +55,7 @@ export function UploadDropzone({
   const selectFile = (candidate: File | undefined) => {
     if (!candidate) return;
 
-    const validationError = validateFile(candidate);
+    const validationError = validateFile(candidate, maxFileSizeMb);
     if (validationError) {
       onFileChange(null);
       onError(validationError);
@@ -119,7 +121,7 @@ export function UploadDropzone({
           拖拽合同到这里，或点击选择文件
         </span>
         <span className="mt-2 text-sm opacity-65">
-          支持文本型 PDF / DOCX，单个文件不超过 20MB
+          支持文本型 PDF / DOCX，单个文件不超过 {maxFileSizeMb}MB
         </span>
       </div>
 

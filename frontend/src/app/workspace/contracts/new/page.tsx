@@ -11,6 +11,7 @@ import {
 } from '@/lib/api/contracts';
 import { ApiError } from '@/lib/api/client';
 import { useReviewRuleSets } from '@/lib/hooks/use-rule-sets';
+import { useUsageSummary } from '@/lib/hooks/use-usage';
 
 const CONTRACT_TYPE_OPTIONS: Array<{ value: ContractType; label: string }> = [
   { value: 'SALES', label: '销售合同' },
@@ -42,6 +43,8 @@ export default function NewContractPage() {
   const [error, setError] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const ruleSetsQuery = useReviewRuleSets(contractType, stance);
+  const usageQuery = useUsageSummary();
+  const maxFileSizeMb = usageQuery.data?.maxFileSizeMb ?? 20;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -101,6 +104,7 @@ export default function NewContractPage() {
                 setError('');
               }}
               onError={setError}
+              maxFileSizeMb={maxFileSizeMb}
               disabled={isUploading}
             />
 
@@ -200,7 +204,7 @@ export default function NewContractPage() {
 
             <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs leading-5 text-copy-subtle">
-                支持文本型 PDF / DOCX，单个文件不超过 20MB。
+                支持文本型 PDF / DOCX，单个文件不超过 {maxFileSizeMb}MB。
               </p>
               <TechButton type="submit" size="lg" disabled={isUploading || !file || !confirmed}>
                 {isUploading ? '正在上传...' : '上传并继续'}

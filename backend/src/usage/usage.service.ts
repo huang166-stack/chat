@@ -15,6 +15,7 @@ export const ACTIVE_REVIEW_STATUSES: ReviewStatus[] = [
 
 const DEFAULT_REVIEW_QUOTA = 10;
 const DEFAULT_MAX_CONTRACT_PAGES = 30;
+const DEFAULT_MAX_FILE_SIZE_MB = 20;
 const MAX_ACTIVE_REVIEWS_PER_USER = 1;
 
 interface UsageLedgerClient {
@@ -28,6 +29,34 @@ interface UsageLedgerClient {
 export class UsageService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async assertCanUpload(
+    userId: bigint,
+    role: string,
+    sizeBytes: number,
+    pageCount: number,
+  ) {
+    if (role === 'ADMIN') {
+      return;
+    }
+
+    const allowance = await this.getAllowance(userId, false);
+    if (sizeBytes > allowance.maxFileSizeMb * 1024 * 1024) {
+      throw new BusinessException(
+        `当前套餐单个文件不能超过 ${allowance.maxFileSizeMb}MB`,
+        ErrorCodes.FILE_TOO_LARGE,
+        HttpStatus.PAYLOAD_TOO_LARGE,
+      );
+    }
+
+    if (pageCount > allowance.maxContractPages) {
+      throw new BusinessException(
+        `当前套餐单份合同最多 ${allowance.maxContractPages} 页`,
+        ErrorCodes.FILE_PAGE_LIMIT_EXCEEDED,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
   async assertCanCreateReview(userId: bigint, role: string, pageCount: number) {
     if (role === 'ADMIN') {
       return {
@@ -37,6 +66,7 @@ export class UsageService {
         usedPages: 0,
         remainingPages: null,
         maxContractPages: null,
+        maxFileSizeMb: null,
       };
     }
 
@@ -86,6 +116,7 @@ export class UsageService {
       usedPages: allowance.usedPages,
       remainingPages: allowance.remainingPages,
       maxContractPages: allowance.maxContractPages,
+      maxFileSizeMb: allowance.maxFileSizeMb,
       activeTasks: allowance.activeTasks,
       concurrencyLimit: role === 'ADMIN' ? null : MAX_ACTIVE_REVIEWS_PER_USER,
     };
@@ -178,6 +209,7 @@ export class UsageService {
       usedPages,
       remainingPages: quota === null ? null : Math.max(0, quota - usedPages),
       maxContractPages: plan?.maxContractPages ?? DEFAULT_MAX_CONTRACT_PAGES,
+      maxFileSizeMb: plan?.maxFileSizeMb ?? DEFAULT_MAX_FILE_SIZE_MB,
       activeTasks,
     };
   }

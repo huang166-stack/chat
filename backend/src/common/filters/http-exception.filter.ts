@@ -43,7 +43,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       )) {
         code = this.defaultCodeForStatus(status);
         if (status === HttpStatus.PAYLOAD_TOO_LARGE) {
-          message = '合同文件不能超过 20MB';
+          message = '合同文件超过允许大小';
         }
       }
     } else {
