@@ -85,7 +85,7 @@ export default function RegisterPage() {
     try {
       const session = await registerApi(values.username, values.password, values.confirmPassword);
       setSession(session);
-      router.replace('/chat');
+      router.replace('/workspace');
     } catch (error) {
       const message = error instanceof ApiError ? error.message : '注册失败，请稍后重试';
       setError('root', { message });

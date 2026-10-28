@@ -42,6 +42,9 @@ export function useCreateReview(projectId: string | number) {
     onSuccess: (task) => {
       queryClient.setQueryData(['review-task', task.id], task);
       queryClient.invalidateQueries({ queryKey: ['contract-findings', String(projectId)] });
+      queryClient.invalidateQueries({ queryKey: ['contract-detail', String(projectId)] });
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['contract-overview'] });
     },
   });
 }
@@ -52,6 +55,9 @@ export function useRetryReview() {
     mutationFn: (taskId: string | number) => retryReview(taskId),
     onSuccess: (task) => {
       queryClient.setQueryData(['review-task', task.id], task);
+      queryClient.invalidateQueries({ queryKey: ['contract-detail', task.projectId] });
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['contract-overview'] });
     },
   });
 }
@@ -62,6 +68,9 @@ export function useCancelReview() {
     mutationFn: (taskId: string | number) => cancelReview(taskId),
     onSuccess: (task) => {
       queryClient.setQueryData(['review-task', task.id], task);
+      queryClient.invalidateQueries({ queryKey: ['contract-detail', task.projectId] });
+      queryClient.invalidateQueries({ queryKey: ['contracts'] });
+      queryClient.invalidateQueries({ queryKey: ['contract-overview'] });
     },
   });
 }
@@ -69,11 +78,12 @@ export function useCancelReview() {
 export function useContractFindings(
   projectId: string | number | null,
   filters: ReviewFindingFilters = {},
+  enabled = true,
 ) {
   return useQuery({
     queryKey: ['contract-findings', projectId, filters],
     queryFn: () => getContractFindings(projectId as string | number, filters),
-    enabled: Boolean(projectId),
+    enabled: Boolean(projectId) && enabled,
   });
 }
 
@@ -84,6 +94,8 @@ export function useUpdateFindingStatus(projectId: string | number) {
       updateFindingStatus(findingId, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contract-findings', String(projectId)] });
+      queryClient.invalidateQueries({ queryKey: ['contract-detail', String(projectId)] });
+      queryClient.invalidateQueries({ queryKey: ['contract-overview'] });
     },
   });
 }

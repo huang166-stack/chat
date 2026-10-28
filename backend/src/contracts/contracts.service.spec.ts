@@ -10,6 +10,7 @@ import {
   type UploadedContractFile,
 } from './contracts.constants.js';
 import { ContractsService } from './contracts.service.js';
+import type { ContractQueryDto } from './dto/contract-query.dto.js';
 
 const DOCX_MIME =
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -89,6 +90,19 @@ function setup() {
     contractProject: {
       create: vi.fn(),
       delete: vi.fn().mockResolvedValue({}),
+      findMany: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
+      findFirst: vi.fn().mockResolvedValue(null),
+    },
+    reviewFinding: {
+      groupBy: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
+    },
+    reviewTask: {
+      count: vi.fn().mockResolvedValue(0),
+    },
+    reviewReport: {
+      count: vi.fn().mockResolvedValue(0),
     },
     $transaction: vi.fn(),
   };
@@ -317,5 +331,151 @@ describe('ContractsService', () => {
     expect(storage.delete).toHaveBeenCalledWith(
       expect.stringMatching(/^contracts\/1\//),
     );
+  });
+
+  it('lists contracts for the current user with latest task risk counts', async () => {
+    const { service, prisma } = setup();
+    const now = new Date('2026-10-23T08:00:00.000Z');
+    prisma.contractProject.findMany.mockResolvedValue([
+      {
+        id: 5n,
+        name: '采购框架合同',
+        contractType: 'PURCHASE',
+        counterparty: null,
+        stance: 'PARTY_A',
+        status: 'COMPLETED',
+        createdAt: now,
+        updatedAt: now,
+        documents: [
+          {
+            id: 6n,
+            filename: '采购框架合同.pdf',
+            mimeType: 'application/pdf',
+            size: 1024,
+            pageCount: 8,
+            parseStatus: 'SUCCESS',
+            parseError: null,
+            createdAt: now,
+            tasks: [
+              {
+                id: 12n,
+                status: 'SUCCESS',
+                progress: 100,
+                errorMessage: null,
+                createdAt: now,
+                completedAt: now,
+                ruleSet: { name: '默认规则集', version: 1 },
+                modelConfig: null,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+    prisma.contractProject.count.mockResolvedValue(1);
+    prisma.reviewFinding.groupBy.mockResolvedValue([
+      { taskId: 12n, riskLevel: 'HIGH', _count: { _all: 2 } },
+      { taskId: 12n, riskLevel: 'MEDIUM', _count: { _all: 1 } },
+    ]);
+
+    const result = await service.findAll(7n, {
+      page: 1,
+      pageSize: 20,
+      keyword: '采购',
+    } as ContractQueryDto);
+
+    expect(prisma.contractProject.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: 7n,
+          deletedAt: null,
+          OR: expect.any(Array),
+        }),
+        skip: 0,
+        take: 20,
+      }),
+    );
+    expect(result.list[0]).toMatchObject({
+      id: '5',
+      name: '采购框架合同',
+      document: { filename: '采购框架合同.pdf', pageCount: 8 },
+      latestTask: {
+        id: '12',
+        status: 'SUCCESS',
+        findingCounts: { total: 3, high: 2, medium: 1, low: 0 },
+      },
+    });
+  });
+
+  it('returns contract clauses and latest task only for the owner', async () => {
+    const { service, prisma } = setup();
+    const now = new Date('2026-10-23T08:00:00.000Z');
+    prisma.contractProject.findFirst.mockResolvedValue({
+      id: 5n,
+      name: '采购框架合同',
+      contractType: 'PURCHASE',
+      counterparty: '示例供应商',
+      stance: 'PARTY_A',
+      status: 'COMPLETED',
+      createdAt: now,
+      updatedAt: now,
+      documents: [
+        {
+          id: 6n,
+          filename: '采购框架合同.pdf',
+          mimeType: 'application/pdf',
+          size: 1024,
+          pageCount: 8,
+          parseStatus: 'SUCCESS',
+          parseError: null,
+          createdAt: now,
+          clauses: [
+            {
+              id: 8n,
+              orderNo: 1,
+              clauseType: 'PAYMENT',
+              heading: '付款方式',
+              content: '甲方应在验收后 30 日内付款。',
+              pageStart: 1,
+              pageEnd: 1,
+            },
+          ],
+          tasks: [
+            {
+              id: 12n,
+              status: 'SUCCESS',
+              progress: 100,
+              errorMessage: null,
+              createdAt: now,
+              completedAt: now,
+              ruleSet: { name: '默认规则集', version: 1 },
+              modelConfig: { name: 'GPT 对话模型' },
+              findings: [
+                { riskLevel: 'HIGH', status: 'OPEN' },
+                { riskLevel: 'LOW', status: 'ACCEPTED' },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    const result = await service.findOne(7n, 5n);
+
+    expect(prisma.contractProject.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 5n, userId: 7n, deletedAt: null },
+      }),
+    );
+    expect(result.document?.clauses[0]).toMatchObject({
+      id: '8',
+      orderNo: 1,
+      heading: '付款方式',
+    });
+    expect(result.latestTask).toMatchObject({
+      id: '12',
+      modelName: 'GPT 对话模型',
+      findingCounts: { total: 2, high: 1, medium: 0, low: 1 },
+    });
   });
 });

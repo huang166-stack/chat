@@ -22,7 +22,7 @@ export function SiteHeader() {
   const mounted = useSyncExternalStore(subscribeToClient, getClientSnapshot, getServerSnapshot);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const workspaceHref = user?.role === 'ADMIN' ? '/admin' : '/chat';
+  const workspaceHref = user?.role === 'ADMIN' ? '/admin' : '/workspace';
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-ink-950/85 backdrop-blur-xl">

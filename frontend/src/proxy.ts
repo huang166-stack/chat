@@ -38,11 +38,12 @@ export function proxy(request: NextRequest) {
   }
 
   if (isAdminPage && getRoleFromToken(accessToken) !== 'ADMIN') {
-    return NextResponse.redirect(new URL('/chat', request.url));
+    return NextResponse.redirect(new URL('/workspace', request.url));
   }
 
   if (isAuthPage && accessToken) {
-    return NextResponse.redirect(new URL('/chat', request.url));
+    const destination = getRoleFromToken(accessToken) === 'ADMIN' ? '/admin' : '/workspace';
+    return NextResponse.redirect(new URL(destination, request.url));
   }
 
   return NextResponse.next();

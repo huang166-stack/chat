@@ -81,10 +81,10 @@ export function ReportPageClient({ contractId }: ReportPageClientProps) {
             </p>
           </div>
           <Link
-            href="/chat"
+            href={`/workspace/contracts/${contractId}`}
             className="rounded-[2px] border border-line px-4 py-2 text-sm transition hover:border-brand-500/60 hover:text-brand-400"
           >
-            返回对话
+            返回合同详情
           </Link>
         </header>
 

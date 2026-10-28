@@ -28,7 +28,7 @@ export default function LoginPage() {
     try {
       const session = await login(values.username, values.password);
       setSession(session);
-      router.replace(session.user.role === 'ADMIN' ? '/admin' : '/chat');
+      router.replace(session.user.role === 'ADMIN' ? '/admin' : '/workspace');
     } catch (error) {
       const message = error instanceof ApiError ? error.message : '登录失败，请稍后重试';
       setError('root', { message });

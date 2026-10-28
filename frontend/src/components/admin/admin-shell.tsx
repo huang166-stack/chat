@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, Layout, Menu, Space, Typography } from 'antd';
@@ -27,27 +27,27 @@ const menuItems = [
   { key: '/admin/orders', icon: <ProfileOutlined />, label: '订单管理' },
 ];
 
+const subscribeToClient = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const clearSession = useAuthStore((state) => state.clearSession);
-  const [ready, setReady] = useState(false);
+  const mounted = useSyncExternalStore(subscribeToClient, getClientSnapshot, getServerSnapshot);
 
   useEffect(() => {
-    setReady(true);
-  }, []);
-
-  useEffect(() => {
-    if (!ready) return;
+    if (!mounted) return;
     if (!user) {
       router.replace('/login');
       return;
     }
     if (user.role !== 'ADMIN') {
-      router.replace('/chat');
+      router.replace('/workspace');
     }
-  }, [ready, router, user]);
+  }, [mounted, router, user]);
 
   const handleLogout = async () => {
     try {
@@ -58,7 +58,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     }
   };
 
-  if (!ready || !user || user.role !== 'ADMIN') {
+  if (!mounted || !user || user.role !== 'ADMIN') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-100 text-sm text-zinc-500">
         正在验证管理员权限...

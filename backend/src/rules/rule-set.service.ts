@@ -18,6 +18,39 @@ export class RuleSetService {
     private readonly configValidator: RuleConfigValidator,
   ) {}
 
+  async list(selection: RuleSetSelection) {
+    const stance = selection.stance ?? 'NEUTRAL';
+    const stances = Array.from(new Set([stance, 'NEUTRAL']));
+    const ruleSets = await this.prisma.reviewRuleSet.findMany({
+      where: {
+        enabled: 1,
+        stance: { in: stances },
+        ...(selection.contractType
+          ? {
+              OR: [
+                { contractType: selection.contractType as ContractType },
+                { contractType: null },
+              ],
+            }
+          : { contractType: null }),
+      },
+      orderBy: [{ contractType: 'asc' }, { version: 'desc' }, { updatedAt: 'desc' }],
+      include: {
+        items: { where: { enabled: 1 }, select: { id: true } },
+      },
+    });
+
+    return ruleSets.map((ruleSet) => ({
+      id: String(ruleSet.id),
+      name: ruleSet.name,
+      description: ruleSet.description,
+      contractType: ruleSet.contractType,
+      stance: ruleSet.stance,
+      version: ruleSet.version,
+      ruleCount: ruleSet.items.length,
+    }));
+  }
+
   async load(selection: RuleSetSelection): Promise<LoadedRuleSet> {
     const stance = selection.stance ?? 'NEUTRAL';
     const query = {
