@@ -46,6 +46,9 @@ export class AdminMemberPlansService {
         description: dto.description,
         enabled: dto.enabled ?? 1,
         sort: dto.sort ?? 0,
+        reviewQuota: dto.reviewQuota ?? 10,
+        maxContractPages: dto.maxContractPages ?? 30,
+        maxFileSizeMb: dto.maxFileSizeMb ?? 20,
       },
     });
 
@@ -64,6 +67,9 @@ export class AdminMemberPlansService {
         description: dto.description,
         enabled: dto.enabled,
         sort: dto.sort,
+        reviewQuota: dto.reviewQuota,
+        maxContractPages: dto.maxContractPages,
+        maxFileSizeMb: dto.maxFileSizeMb,
       },
     });
 
@@ -99,6 +105,9 @@ export class AdminMemberPlansService {
       description: plan.description,
       enabled: plan.enabled,
       sort: plan.sort,
+      reviewQuota: plan.reviewQuota,
+      maxContractPages: plan.maxContractPages,
+      maxFileSizeMb: plan.maxFileSizeMb,
       createdAt: plan.createdAt,
       updatedAt: plan.updatedAt,
     };

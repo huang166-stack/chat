@@ -140,7 +140,8 @@ export class ReviewsService {
     }
 
     const pageCount = effectivePageCount(task.document);
-    await this.usage.assertCanCreateReview(userId, role, pageCount);
+    const ownerUserId = task.document.project.userId;
+    await this.usage.assertCanCreateReview(ownerUserId, role, pageCount);
     await this.progress.clearCancellation(taskId);
 
     const retried = await this.prisma.$transaction(async (tx) => {
@@ -175,7 +176,7 @@ export class ReviewsService {
     try {
       await this.enqueue(
         task,
-        userId,
+        ownerUserId,
         `review-${String(taskId)}-retry-${Date.now()}`,
       );
     } catch (error) {

@@ -3,6 +3,7 @@ import {
   createAdminModel,
   createAdminPayment,
   createAdminPlan,
+  createAdminRule,
   deleteAdminModel,
   deleteAdminPayment,
   deleteAdminPlan,
@@ -12,10 +13,15 @@ import {
   getAdminOrders,
   getAdminPayments,
   getAdminPlans,
+  getAdminReviews,
+  getAdminRules,
   getAdminUsers,
+  getAdminUsage,
+  retryAdminReview,
   updateAdminModel,
   updateAdminPayment,
   updateAdminPlan,
+  updateAdminRule,
   updateAdminUser,
 } from '@/lib/api/admin';
 import type {
@@ -23,6 +29,9 @@ import type {
   AdminOrderQuery,
   AdminPaymentQuery,
   AdminPlanQuery,
+  AdminReviewQuery,
+  AdminReviewRuleQuery,
+  AdminUsageQuery,
   AdminUserQuery,
 } from '@/types/admin';
 
@@ -179,5 +188,60 @@ export function useAdminOrders(query: AdminOrderQuery) {
   return useQuery({
     queryKey: ['admin-orders', query],
     queryFn: () => getAdminOrders(query),
+  });
+}
+
+export function useAdminRules(query: AdminReviewRuleQuery) {
+  return useQuery({
+    queryKey: ['admin-rules', query],
+    queryFn: () => getAdminRules(query),
+  });
+}
+
+export function useCreateAdminRule() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Record<string, unknown>) => createAdminRule(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-rules'] });
+      queryClient.invalidateQueries({ queryKey: ['review-rule-sets'] });
+    },
+  });
+}
+
+export function useUpdateAdminRule() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      updateAdminRule(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-rules'] });
+      queryClient.invalidateQueries({ queryKey: ['review-rule-sets'] });
+    },
+  });
+}
+
+export function useAdminReviews(query: AdminReviewQuery) {
+  return useQuery({
+    queryKey: ['admin-reviews', query],
+    queryFn: () => getAdminReviews(query),
+  });
+}
+
+export function useRetryAdminReview() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => retryAdminReview(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] });
+    },
+  });
+}
+
+export function useAdminUsage(query: AdminUsageQuery) {
+  return useQuery({
+    queryKey: ['admin-usage', query],
+    queryFn: () => getAdminUsage(query),
   });
 }

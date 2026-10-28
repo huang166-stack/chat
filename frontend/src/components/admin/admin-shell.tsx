@@ -5,12 +5,15 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button, Layout, Menu, Space, Typography } from 'antd';
 import {
+  BarChartOutlined,
   CreditCardOutlined,
   DashboardOutlined,
+  FileSearchOutlined,
   GiftOutlined,
   LogoutOutlined,
   ProfileOutlined,
   RobotOutlined,
+  SafetyCertificateOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import { logout } from '@/lib/api/auth';
@@ -20,6 +23,9 @@ const { Header, Sider, Content } = Layout;
 
 const menuItems = [
   { key: '/admin', icon: <DashboardOutlined />, label: '仪表盘' },
+  { key: '/admin/reviews', icon: <FileSearchOutlined />, label: '审查任务' },
+  { key: '/admin/rules', icon: <SafetyCertificateOutlined />, label: '规则管理' },
+  { key: '/admin/usage', icon: <BarChartOutlined />, label: '用量统计' },
   { key: '/admin/users', icon: <UserOutlined />, label: '用户管理' },
   { key: '/admin/plans', icon: <GiftOutlined />, label: '套餐管理' },
   { key: '/admin/models', icon: <RobotOutlined />, label: '模型管理' },
@@ -71,7 +77,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       <Sider breakpoint="lg" collapsedWidth="0" className="!bg-zinc-950">
         <div className="flex h-14 items-center gap-2 px-5">
           <div className="h-7 w-7 rounded-lg bg-blue-600" />
-          <span className="truncate text-sm font-semibold text-white">对话系统后台</span>
+          <span className="truncate text-sm font-semibold text-white">合同审查后台</span>
         </div>
         <Menu
           theme="dark"
@@ -87,8 +93,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
           <Typography.Text strong>管理后台</Typography.Text>
           <Space>
             <span className="text-sm text-zinc-500">{user.username}</span>
-            <Link href="/chat" className="text-sm text-blue-600 hover:underline">
-              返回对话
+            <Link href="/workspace" className="text-sm text-blue-600 hover:underline">
+              返回工作台
             </Link>
             <Button type="text" icon={<LogoutOutlined />} onClick={handleLogout}>
               退出

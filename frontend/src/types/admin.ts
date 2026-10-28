@@ -31,8 +31,109 @@ export interface AdminPlan {
   description?: string | null;
   enabled: number;
   sort: number;
+  reviewQuota: number;
+  maxContractPages: number;
+  maxFileSizeMb: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export type AdminRiskLevel = 'HIGH' | 'MEDIUM' | 'LOW';
+export type AdminRuleType = 'PRESENCE' | 'REGEX' | 'KEYWORD' | 'THRESHOLD' | 'LLM';
+
+export interface AdminReviewRule {
+  id: string;
+  code: string;
+  name: string;
+  category: string;
+  severity: AdminRiskLevel;
+  ruleType: AdminRuleType;
+  description?: string | null;
+  configJson: unknown;
+  prompt?: string | null;
+  enabled: number;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminReviewRuleQuery {
+  page?: number;
+  pageSize?: number;
+  keyword?: string;
+  category?: string;
+  ruleType?: AdminRuleType;
+  enabled?: number;
+}
+
+export type AdminReviewStatus =
+  | 'PENDING'
+  | 'PARSING'
+  | 'RULE_CHECK'
+  | 'MODEL_REVIEW'
+  | 'AGGREGATING'
+  | 'SUCCESS'
+  | 'FAILED'
+  | 'CANCELLED';
+
+export interface AdminReviewTask {
+  id: string;
+  projectId: string;
+  projectName: string;
+  filename: string;
+  username: string;
+  pageCount: number;
+  ruleSetName: string | null;
+  ruleSetVersion: number | null;
+  modelName: string | null;
+  status: AdminReviewStatus;
+  progress: number;
+  errorMessage: string | null;
+  findingCount: number;
+  durationMs: number | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  canRetry: boolean;
+}
+
+export interface AdminReviewQuery {
+  page?: number;
+  pageSize?: number;
+  status?: AdminReviewStatus;
+  keyword?: string;
+}
+
+export interface AdminUsageRow {
+  userId: string;
+  username: string;
+  nickname: string | null;
+  credits: number;
+  tokensIn: number;
+  tokensOut: number;
+  entries: number;
+}
+
+export interface AdminUsageQuery {
+  page?: number;
+  pageSize?: number;
+  month?: string;
+  keyword?: string;
+}
+
+export interface AdminUsageResult {
+  list: AdminUsageRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+  month: string;
+  totals: {
+    credits: number;
+    tokensIn: number;
+    tokensOut: number;
+    entries: number;
+  };
 }
 
 export interface AdminModelConfig {

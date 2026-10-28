@@ -10,6 +10,12 @@ import type {
   AdminPaymentQuery,
   AdminPlan,
   AdminPlanQuery,
+  AdminReviewQuery,
+  AdminReviewRule,
+  AdminReviewRuleQuery,
+  AdminReviewTask,
+  AdminUsageQuery,
+  AdminUsageResult,
   AdminUser,
   AdminUserQuery,
 } from '@/types/admin';
@@ -58,6 +64,30 @@ export function updateAdminPlan(id: string | number, data: Record<string, unknow
 
 export function deleteAdminPlan(id: string | number) {
   return api.delete<null>(`/admin/member-plans/${id}`);
+}
+
+export function getAdminRules(query: AdminReviewRuleQuery = {}) {
+  return api.get<PageResult<AdminReviewRule>>(`/admin/review-rules${toQuery(query)}`);
+}
+
+export function createAdminRule(data: Record<string, unknown>) {
+  return api.post<AdminReviewRule>('/admin/review-rules', data);
+}
+
+export function updateAdminRule(id: string | number, data: Record<string, unknown>) {
+  return api.put<AdminReviewRule>(`/admin/review-rules/${id}`, data);
+}
+
+export function getAdminReviews(query: AdminReviewQuery = {}) {
+  return api.get<PageResult<AdminReviewTask>>(`/admin/reviews${toQuery(query)}`);
+}
+
+export function retryAdminReview(id: string | number) {
+  return api.post<AdminReviewTask>(`/admin/reviews/${id}/retry`);
+}
+
+export function getAdminUsage(query: AdminUsageQuery = {}) {
+  return api.get<AdminUsageResult>(`/admin/usage${toQuery(query)}`);
 }
 
 export function getAdminModels(query: AdminModelQuery = {}) {

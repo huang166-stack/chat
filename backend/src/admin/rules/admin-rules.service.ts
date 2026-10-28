@@ -64,19 +64,51 @@ export class AdminRulesService {
     this.assertLlmPrompt(dto.ruleType, dto.prompt);
 
     try {
-      const rule = await this.prisma.reviewRule.create({
-        data: {
-          code: dto.code,
-          name: dto.name,
-          category: dto.category,
-          severity: dto.severity,
-          ruleType: dto.ruleType,
-          description: dto.description,
-          configJson: config as Prisma.InputJsonValue,
-          prompt: dto.prompt,
-          enabled: dto.enabled ?? 1,
-          version: dto.version ?? 1,
-        },
+      const rule = await this.prisma.$transaction(async (tx) => {
+        const created = await tx.reviewRule.create({
+          data: {
+            code: dto.code,
+            name: dto.name,
+            category: dto.category,
+            severity: dto.severity,
+            ruleType: dto.ruleType,
+            description: dto.description,
+            configJson: config as Prisma.InputJsonValue,
+            prompt: dto.prompt,
+            enabled: dto.enabled ?? 1,
+            version: dto.version ?? 1,
+          },
+        });
+
+        if (dto.ruleSetId) {
+          const ruleSetId = BigInt(dto.ruleSetId);
+          const ruleSet = await tx.reviewRuleSet.findUnique({
+            where: { id: ruleSetId },
+            select: { id: true },
+          });
+          if (!ruleSet) {
+            throw new BusinessException(
+              '规则集不存在',
+              ErrorCodes.NOT_FOUND,
+              HttpStatus.NOT_FOUND,
+            );
+          }
+
+          const maxSort = await tx.reviewRuleSetItem.aggregate({
+            where: { ruleSetId },
+            _max: { sort: true },
+          });
+          await tx.reviewRuleSetItem.create({
+            data: {
+              ruleSetId,
+              ruleId: created.id,
+              enabled: 1,
+              sort: (maxSort._max.sort ?? 0) + 1,
+            },
+          });
+        }
+
+        return created;
       });
       return this.serialize(rule);
     } catch (error) {

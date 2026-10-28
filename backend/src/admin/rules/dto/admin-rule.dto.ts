@@ -69,6 +69,11 @@ export class CreateRuleDto {
   @IsInt()
   @Min(1)
   version?: number;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d+$/)
+  ruleSetId?: string;
 }
 
 export class UpdateRuleDto {

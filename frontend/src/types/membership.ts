@@ -8,6 +8,9 @@ export interface MemberPlan {
   durationDays: number;
   description?: string | null;
   sort: number;
+  reviewQuota: number;
+  maxContractPages: number;
+  maxFileSizeMb: number;
 }
 
 export interface MembershipStatus {

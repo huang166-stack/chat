@@ -16,6 +16,8 @@ import { AdminUsersModule } from './admin/users/admin-users.module.js';
 import { AdminOrdersModule } from './admin/orders/admin-orders.module.js';
 import { AdminDashboardModule } from './admin/dashboard/admin-dashboard.module.js';
 import { AdminRulesModule } from './admin/rules/admin-rules.module.js';
+import { AdminReviewsModule } from './admin/reviews/admin-reviews.module.js';
+import { AdminUsageModule } from './admin/usage/admin-usage.module.js';
 import { UsersModule } from './users/users.module.js';
 import { PaymentModule } from './payment/payment.module.js';
 import { OrdersModule } from './orders/orders.module.js';
@@ -42,6 +44,8 @@ import { ReviewsModule } from './reviews/reviews.module.js';
     AdminOrdersModule,
     AdminDashboardModule,
     AdminRulesModule,
+    AdminReviewsModule,
+    AdminUsageModule,
     MembershipsModule,
     MemberPlansModule,
     ModelConfigsModule,

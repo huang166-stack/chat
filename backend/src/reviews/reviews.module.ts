@@ -26,6 +26,6 @@ import { ReviewsService } from './reviews.service.js';
     ReviewModelService,
     ReviewProcessor,
   ],
-  exports: [ReviewProcessor],
+  exports: [ReviewsService, ReviewProcessor],
 })
 export class ReviewsModule {}

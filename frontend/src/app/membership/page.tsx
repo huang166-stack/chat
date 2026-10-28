@@ -21,7 +21,7 @@ export default function MembershipPage() {
       <div className="mx-auto w-full max-w-5xl">
         <div className="mb-8">
           <h1 className="text-3xl font-semibold text-zinc-900 dark:text-zinc-50">会员中心</h1>
-          <p className="mt-2 text-zinc-500">选择适合你的套餐，解锁大模型对话能力</p>
+          <p className="mt-2 text-zinc-500">选择适合你的套餐，解锁合同审查、风险定位与报告导出</p>
         </div>
 
         <section className="mb-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -55,6 +55,9 @@ export default function MembershipPage() {
                 ¥{Number(plan.price).toFixed(2)}
               </p>
               <p className="mt-2 text-sm text-zinc-500">有效期 {plan.durationDays} 天</p>
+              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
+                每月 {plan.reviewQuota} 页审查额度 · 单份合同最多 {plan.maxContractPages} 页 · 单文件最大 {plan.maxFileSizeMb} MB
+              </p>
               <p className="mt-3 flex-1 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
                 {plan.description || '暂无说明'}
               </p>

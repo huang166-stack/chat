@@ -19,6 +19,9 @@ export class MemberPlansService {
       durationDays: plan.durationDays,
       description: plan.description,
       sort: plan.sort,
+      reviewQuota: plan.reviewQuota,
+      maxContractPages: plan.maxContractPages,
+      maxFileSizeMb: plan.maxFileSizeMb,
     }));
   }
 }

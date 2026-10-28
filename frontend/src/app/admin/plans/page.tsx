@@ -33,6 +33,9 @@ const emptyPlan: AdminPlanValues = {
   description: '',
   enabled: 1,
   sort: 0,
+  reviewQuota: 20,
+  maxContractPages: 30,
+  maxFileSizeMb: 20,
 };
 
 export default function AdminPlansPage() {
@@ -67,6 +70,9 @@ export default function AdminPlansPage() {
       description: plan.description ?? '',
       enabled: plan.enabled,
       sort: plan.sort,
+      reviewQuota: plan.reviewQuota,
+      maxContractPages: plan.maxContractPages,
+      maxFileSizeMb: plan.maxFileSizeMb,
     });
     setModalOpen(true);
   };
@@ -101,6 +107,24 @@ export default function AdminPlansPage() {
       render: (value: string) => durationLabels[value] ?? value,
     },
     { title: '天数', dataIndex: 'durationDays', key: 'durationDays' },
+    {
+      title: '审查额度',
+      dataIndex: 'reviewQuota',
+      key: 'reviewQuota',
+      render: (value: number) => `${value} 页`,
+    },
+    {
+      title: '单份页数',
+      dataIndex: 'maxContractPages',
+      key: 'maxContractPages',
+      render: (value: number) => `${value} 页`,
+    },
+    {
+      title: '文件大小',
+      dataIndex: 'maxFileSizeMb',
+      key: 'maxFileSizeMb',
+      render: (value: number) => `${value} MB`,
+    },
     {
       title: '状态',
       dataIndex: 'enabled',
@@ -154,6 +178,7 @@ export default function AdminPlansPage() {
         loading={plansQuery.isLoading}
         columns={columns}
         dataSource={plansQuery.data?.list ?? []}
+        scroll={{ x: 1200 }}
         pagination={{
           current: page,
           pageSize,
@@ -257,6 +282,60 @@ export default function AdminPlansPage() {
                 )}
               />
               {errors.sort && <p className="mt-1 text-sm text-red-500">{errors.sort.message}</p>}
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-sm text-zinc-600">每月审查额度（页）</label>
+              <Controller
+                control={control}
+                name="reviewQuota"
+                render={({ field }) => (
+                  <InputNumber
+                    {...field}
+                    min={1}
+                    precision={0}
+                    style={{ width: '100%' }}
+                    onChange={(value) => field.onChange(value ?? 1)}
+                  />
+                )}
+              />
+              {errors.reviewQuota && <p className="mt-1 text-sm text-red-500">{errors.reviewQuota.message}</p>}
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-zinc-600">单份合同最多（页）</label>
+              <Controller
+                control={control}
+                name="maxContractPages"
+                render={({ field }) => (
+                  <InputNumber
+                    {...field}
+                    min={1}
+                    precision={0}
+                    style={{ width: '100%' }}
+                    onChange={(value) => field.onChange(value ?? 1)}
+                  />
+                )}
+              />
+              {errors.maxContractPages && <p className="mt-1 text-sm text-red-500">{errors.maxContractPages.message}</p>}
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-zinc-600">单文件最大（MB）</label>
+              <Controller
+                control={control}
+                name="maxFileSizeMb"
+                render={({ field }) => (
+                  <InputNumber
+                    {...field}
+                    min={1}
+                    precision={0}
+                    style={{ width: '100%' }}
+                    onChange={(value) => field.onChange(value ?? 1)}
+                  />
+                )}
+              />
+              {errors.maxFileSizeMb && <p className="mt-1 text-sm text-red-500">{errors.maxFileSizeMb.message}</p>}
             </div>
           </div>
 

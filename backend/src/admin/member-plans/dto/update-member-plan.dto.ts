@@ -38,4 +38,22 @@ export class UpdateMemberPlanDto {
   @Type(() => Number)
   @IsInt()
   sort?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  reviewQuota?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  maxContractPages?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  maxFileSizeMb?: number;
 }
