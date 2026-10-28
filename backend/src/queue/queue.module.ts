@@ -9,6 +9,10 @@ import { ParseProcessor } from './processors/parse.processor.js';
 import { ContractQueueService } from './queue.service.js';
 import { ContractQueueWorker } from './queue.worker.js';
 
+const appRole = process.env.APP_ROLE ?? 'all';
+const workerProviders =
+  appRole === 'api' ? [] : [ParseProcessor, ContractQueueWorker];
+
 @Module({
   imports: [
     BullModule.forRootAsync({
@@ -28,7 +32,7 @@ import { ContractQueueWorker } from './queue.worker.js';
     forwardRef(() => ReviewsModule),
     forwardRef(() => ReportsModule),
   ],
-  providers: [ContractQueueService, ParseProcessor, ContractQueueWorker],
+  providers: [ContractQueueService, ...workerProviders],
   exports: [ContractQueueService],
 })
 export class QueueModule {}

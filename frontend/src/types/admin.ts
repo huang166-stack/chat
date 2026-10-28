@@ -8,6 +8,22 @@ export interface AdminDashboardStats {
   orderCount: number;
   paidAmount: number;
   todayPaidAmount: number;
+  monitoring: {
+    windowDays: number;
+    reviewTotal: number;
+    reviewSuccess: number;
+    reviewFailed: number;
+    reviewCancelled: number;
+    reviewActive: number;
+    successRate: number;
+    averageDurationMs: number;
+    averageDurationSeconds: number;
+    tokensIn: number;
+    tokensOut: number;
+    modelCallCount: number;
+    estimatedModelCost: number;
+    pricingConfigured: boolean;
+  };
 }
 
 export interface AdminUser {
